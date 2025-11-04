@@ -21,20 +21,13 @@
     { id: 'gift_d', name: 'Polyester Unisex 15 Inch Laptop Backpack', image: '/static/img/giftd.png', short: 'Backpack' },
   ];
 
-  // Visual wheel: 12 slices (gifts repeated + try again)
+  // Visual wheel: 5 slices (4 gifts + 1 try again) - larger slices for mobile
   const labelOf = (id) => (gifts.find(g => g.id === id)?.short || id);
   const slices = [
     { kind:'gift', id:'gift_a', label: labelOf('gift_a') },
-    { kind:'try', id:'try', label:'Try Again' },
     { kind:'gift', id:'gift_b', label: labelOf('gift_b') },
+    { kind:'try', id:'try', label:'Try Again' },
     { kind:'gift', id:'gift_c', label: labelOf('gift_c') },
-    { kind:'try', id:'try', label:'Try Again' },
-    { kind:'gift', id:'gift_d', label: labelOf('gift_d') },
-    { kind:'gift', id:'gift_a', label: labelOf('gift_a') },
-    { kind:'try', id:'try', label:'Try Again' },
-    { kind:'gift', id:'gift_b', label: labelOf('gift_b') },
-    { kind:'gift', id:'gift_c', label: labelOf('gift_c') },
-    { kind:'try', id:'try', label:'Try Again' },
     { kind:'gift', id:'gift_d', label: labelOf('gift_d') },
   ];
 
@@ -91,8 +84,10 @@
 
     const n = slices.length;
     const arc = (Math.PI * 2) / n;
+    // Offset slices so first slice is centered at top (where pointer points)
+    const offsetAngle = -(arc/2) - Math.PI/2;
     for (let i=0;i<n;i++){
-      const start = i*arc;
+      const start = i*arc + offsetAngle;
       const end = start + arc;
 
       // Slice fill with subtle radial gradient for depth
@@ -118,24 +113,21 @@
       // Label centered inside the slice (between hub and rim)
       ctx.save();
       // Make font size responsive to wheel radius (scales properly on mobile)
-      const baseFontSize = Math.max(10, radius * 0.030);
+      // Larger slices (5 instead of 12) allow for bigger text
+      const baseFontSize = Math.max(12, radius * 0.042);
       ctx.font = `900 ${baseFontSize}px ui-sans-serif, system-ui, -apple-system`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       const labelRadius = hub + (radius - rim - hub) * 0.55; // interior position
       const sliceAngle = start + arc/2;
-      ctx.rotate(sliceAngle);
-      ctx.translate(labelRadius, 0);
 
-      // Check if text would be upside down and adjust rotation
-      let textRotation = -sliceAngle;
-      // Normalize the angle to 0-2π
-      let normalizedAngle = ((sliceAngle % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
-      // If text would be upside down (between π/2 and 3π/2), flip it
-      if (normalizedAngle > Math.PI/2 && normalizedAngle < 3*Math.PI/2) {
-        textRotation = Math.PI - sliceAngle;
-      }
-      ctx.rotate(textRotation);
+      // Position at the slice angle
+      const x = Math.cos(sliceAngle) * labelRadius;
+      const y = Math.sin(sliceAngle) * labelRadius;
+      ctx.translate(x, y);
+
+      // Keep text always horizontal (no rotation)
+      // This ensures all text is upright and readable
 
       // Split text into lines if needed
       const label = slices[i].label;
@@ -380,22 +372,29 @@
 
     const n = slices.length;
     const arc = (Math.PI*2)/n;
+    const offsetAngle = -(arc/2) - Math.PI/2; // Same offset used in drawing
     const targetIndex = findTargetSliceIndex(outcomeKey);
-    const targetCenter = targetIndex * arc + arc/2;
 
-    // targetRotation so that pointer (angle 0) aligns to the slice center:
-    // pointer angle is (-rotation mod 2pi)
-    const targetModulo = (2*Math.PI - (targetCenter % (2*Math.PI))) % (2*Math.PI);
-    const minExtra = Math.PI*2*1.75; // fewer rotations -> slower angular speed
-    let k = Math.ceil((currentAngle + minExtra - targetModulo) / (2*Math.PI));
-    if (k < 0) k = 0;
-    const endAngle = targetModulo + k*(2*Math.PI);
+    // Since slices are offset so slice 0 is at top when currentAngle=0,
+    // to get slice i at top, we rotate by -i*arc (rotating counter-clockwise)
+    const targetAngle = -targetIndex * arc;
+
+    // Normalize target angle to 0-2π range
+    const targetModulo = ((targetAngle % (2*Math.PI)) + 2*Math.PI) % (2*Math.PI);
+
+    // Add minimum 3 full spins, then calculate final position
+    const minFullSpins = 3;
+    const minTotalRotation = currentAngle + minFullSpins * (2*Math.PI);
+
+    // Find how many full rotations to add to reach the target
+    const k = Math.ceil((minTotalRotation - targetModulo) / (2*Math.PI));
+    const endAngle = targetModulo + k * (2*Math.PI);
 
     // animate
     const startAngle = currentAngle;
     const start = performance.now();
     const totalMs = duration * 1000;
-    let lastPointer = normAngle(-currentAngle);
+    let lastPointer = normAngle(-currentAngle - offsetAngle);
 
     const tick = (now) => {
       const t = Math.min(1, (now - start)/totalMs);
@@ -405,10 +404,10 @@
       drawWheel();
 
       // tick sound at boundary crossings
-      const pointer = normAngle(-a);
-      const step = (Math.PI*2)/slices.length;
+      // Account for the offset angle used in drawing
+      const pointer = normAngle(-a - offsetAngle);
       if (!muted){
-        if (crossed(lastPointer, pointer, step)){
+        if (crossed(lastPointer, pointer, arc)){
           SoundManager.playTick();
           if (pointerEl){
             pointerEl.classList.remove('tick');
