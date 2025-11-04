@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>yesbank .. Grande Life .. Spin to WIN !</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+  <meta name="theme-color" content="#0b6bcb" />
+  <meta name="description" content="Spin the wheel and win fun gifts. Mobile-first, fast, and simple." />
+</head>
+<body class="app-root">
+  <div class="bg-gradient"></div>
+
+  <header class="top">
+    <div class="brand-card">
+      <div class="brand-line bank">YESBANK</div>
+      <div class="brand-line grande">GRANDE LIFE</div>
+      <div class="brand-line spin">SPIN TO WIN</div>
+    </div>
+    <button id="muteBtn" class="icon-btn" aria-label="Toggle sound" title="Toggle sound">🔊</button>
+  </header>
+
+  <main class="middle">
+    <div class="wheel-wrap">
+      <div class="pointer"></div>
+      <canvas id="wheel" class="wheel"></canvas>
+    </div>
+
+    <button id="spinBtn" class="spin-btn">SPIN</button>
+    <button id="tncBtn" class="tnc-link" aria-haspopup="dialog">Terms & Conditions</button>
+  </main>
+
+  <section id="resultCard" class="result-card hidden" aria-live="polite">
+    <div id="resultInner" class="result-inner">
+      <div id="resultBadge" class="result-badge hidden">
+        <img id="resultImg" alt="" />
+      </div>
+      <div class="result-text">
+        <div id="resultTitle" class="result-title">Ready to play? Tap SPIN to begin.</div>
+        <div id="resultSub" class="result-sub"></div>
+        <div id="shareNote" class="share-note hidden">Share this screenshot with your organizer.</div>
+      </div>
+    </div>
+  </section>
+
+  <div id="confetti" class="confetti-canvas-wrap">
+    <canvas id="confettiCanvas"></canvas>
+  </div>
+
+  <dialog id="tncModal" class="modal">
+    <div class="modal-card">
+      <div class="modal-head">
+        <div class="modal-title">Terms & Conditions</div>
+        <button id="closeTnc" class="icon-btn" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body">
+        <p><strong>Eligibility:</strong> Open to anyone with the link.</p>
+        <p><strong>Nature:</strong> Fun, non-monetary engagement. No cash alternatives.</p>
+        <p><strong>Outcomes:</strong> The app only displays results. Organizer manages and fulfills gifts.</p>
+        <p><strong>Data:</strong> No personal data collected. Only anonymous spin logs (timestamp, result, duration).</p>
+        <p><strong>Liability:</strong> Organizer is responsible for prize fulfillment and communications.</p>
+        <p><strong>Misc:</strong> Experience designed for fun with unlimited spins.</p>
+      </div>
+    </div>
+  </dialog>
+
+  <script src="/static/app.js"></script>
+  <noscript>JavaScript is required for the spin experience.</noscript>
+  </body>
+</html>
