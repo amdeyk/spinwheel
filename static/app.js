@@ -113,27 +113,86 @@
 
       // Label centered inside the slice (between hub and rim)
       ctx.save();
-      ctx.fillStyle = '#0b2540';
-      ctx.font = `${15*devicePixelRatio}px ui-sans-serif, system-ui, -apple-system`;
+      ctx.font = `900 ${17*devicePixelRatio}px ui-sans-serif, system-ui, -apple-system`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       const labelRadius = hub + (radius - rim - hub) * 0.55; // interior position
-      ctx.rotate(start + arc/2);
+      const sliceAngle = start + arc/2;
+      ctx.rotate(sliceAngle);
       ctx.translate(labelRadius, 0);
-      ctx.rotate(- (start + arc/2));
-      ctx.fillText(slices[i].label, 0, 0);
+
+      // Check if text would be upside down and adjust rotation
+      let textRotation = -sliceAngle;
+      // Normalize the angle to 0-2π
+      let normalizedAngle = ((sliceAngle % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2);
+      // If text would be upside down (between π/2 and 3π/2), flip it
+      if (normalizedAngle > Math.PI/2 && normalizedAngle < 3*Math.PI/2) {
+        textRotation = Math.PI - sliceAngle;
+      }
+      ctx.rotate(textRotation);
+
+      // Split text into lines if needed
+      const label = slices[i].label;
+      const words = label.split(' ');
+      let lines = [];
+      if (words.length > 1) {
+        // Split into two lines
+        lines = [words[0], words.slice(1).join(' ')];
+      } else {
+        lines = [label];
+      }
+
+      // Measure text to create background
+      const lineHeight = 20*devicePixelRatio;
+      let maxWidth = 0;
+      lines.forEach(line => {
+        const metrics = ctx.measureText(line);
+        if (metrics.width > maxWidth) maxWidth = metrics.width;
+      });
+
+      const textHeight = lineHeight * lines.length;
+      const bgPadding = 6*devicePixelRatio;
+
+      // Draw semi-transparent background rectangle behind text
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
+      const bgY = -(textHeight/2) - bgPadding/2;
+      ctx.fillRect(-maxWidth/2 - bgPadding, bgY, maxWidth + bgPadding*2, textHeight + bgPadding);
+
+      // Draw each line of text
+      lines.forEach((line, idx) => {
+        const yPos = (idx - (lines.length - 1)/2) * lineHeight;
+
+        // Draw text with strong outline for readability
+        ctx.strokeStyle = '#1a1a2e';
+        ctx.lineWidth = 4*devicePixelRatio;
+        ctx.lineJoin = 'round';
+        ctx.miterLimit = 2;
+        ctx.strokeText(line, 0, yPos);
+
+        // Fill text with bright color
+        ctx.fillStyle = '#fff';
+        ctx.fillText(line, 0, yPos);
+      });
+
       ctx.restore();
     }
 
-    // Outer rim (stroke) with metallic gradient
+    // Outer rim (stroke) with vibrant metallic gradient
     const rimGrad = ctx.createRadialGradient(0,0, radius - rim, 0,0, radius);
-    rimGrad.addColorStop(0, '#e8eeff');
-    rimGrad.addColorStop(0.7, '#cfdaf6');
-    rimGrad.addColorStop(1, '#aebde8');
+    rimGrad.addColorStop(0, '#a855f7');
+    rimGrad.addColorStop(0.5, '#8338ec');
+    rimGrad.addColorStop(1, '#6366f1');
     ctx.beginPath();
     ctx.arc(0,0, radius - rim*0.25, 0, Math.PI*2);
     ctx.strokeStyle = rimGrad;
     ctx.lineWidth = rim;
+    ctx.stroke();
+
+    // Add bright highlight ring
+    ctx.beginPath();
+    ctx.arc(0,0, radius - rim*0.35, 0, Math.PI*2);
+    ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+    ctx.lineWidth = rim * 0.15;
     ctx.stroke();
 
     // Gloss highlight overlay
@@ -146,31 +205,40 @@
     ctx.fillStyle = gloss;
     ctx.fill();
 
-    // Center hub cap
+    // Center hub cap - vibrant gradient
     const hubGrad = ctx.createRadialGradient(0,0, hub*0.2, 0,0, hub);
-    hubGrad.addColorStop(0, '#ffffff');
-    hubGrad.addColorStop(1, '#e3eafb');
+    hubGrad.addColorStop(0, '#fff');
+    hubGrad.addColorStop(0.5, '#ffbe0b');
+    hubGrad.addColorStop(1, '#ff006e');
     ctx.beginPath();
     ctx.arc(0,0, hub, 0, Math.PI*2);
     ctx.fillStyle = hubGrad;
     ctx.fill();
 
-    // Decorative inner dot ring
+    // Add metallic ring around hub
+    ctx.beginPath();
+    ctx.arc(0,0, hub, 0, Math.PI*2);
+    ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+    ctx.lineWidth = 3*devicePixelRatio;
+    ctx.stroke();
+
+    // Decorative inner dot ring - bright colors
     const dots = 12;
     const dotR = hub * 0.72;
     const dotSz = Math.max(3*devicePixelRatio, hub*0.09);
-    ctx.fillStyle = '#ffd166';
+    const dotColors = ['#ff006e', '#8338ec', '#00f5ff', '#06ffa5', '#ffbe0b'];
     for (let i=0;i<dots;i++){
       const a = i * 2*Math.PI/dots;
+      ctx.fillStyle = dotColors[i % dotColors.length];
       ctx.beginPath();
       ctx.arc(Math.cos(a)*dotR, Math.sin(a)*dotR, dotSz, 0, Math.PI*2);
       ctx.fill();
     }
 
-    // Small star emblem at the center
+    // Small star emblem at the center - bright gold
     ctx.save();
     ctx.rotate(Math.PI/10);
-    ctx.fillStyle = '#ffb703';
+    ctx.fillStyle = '#fff';
     drawStarShape(ctx, hub*0.45);
     ctx.restore();
 
@@ -179,11 +247,11 @@
 
   function sliceColors(i){
     const palette = [
-      '#6ee7b7','#93c5fd','#fde68a','#fca5a5','#c7d2fe','#fcd34d',
-      '#86efac','#99f6e4','#fecaca','#a5b4fc','#fbcfe8','#7dd3fc'
+      '#ff006e','#8338ec','#3a86ff','#06ffa5','#ffbe0b','#ff006e',
+      '#fb5607','#a855f7','#00d2ff','#00f5ff','#ff4d6d','#4cc9f0'
     ];
     const base = palette[i % palette.length];
-    return [shade(base, -8), shade(base, 16)];
+    return [shade(base, -15), shade(base, 25)];
   }
 
   function drawStarShape(ctx, r){
@@ -234,14 +302,14 @@
     return { playTick, playSpinLoop, stopSpinLoop, playWin, playStop, playLose };
   })();
 
-  // Confetti (larger, varied shapes + emojis)
+  // Confetti (larger, varied shapes + emojis) - SUPER VIBRANT!
   function launchConfetti(ms=2200){
     const DPI = devicePixelRatio || 1;
     const W = confettiCanvas.width, H = confettiCanvas.height;
-    const colors = ['#f87171','#34d399','#60a5fa','#fbbf24','#a78bfa','#f472b6','#22d3ee','#facc15'];
-    const emojis = ['🎉','✨','⭐','🎊'];
+    const colors = ['#ff006e','#8338ec','#3a86ff','#06ffa5','#ffbe0b','#fb5607','#a855f7','#00f5ff','#ff4d6d','#4cc9f0','#ff006e','#00d2ff'];
+    const emojis = ['🎉','✨','⭐','🎊','💥','🌟','💫','🔥'];
     const particles = [];
-    const count = 220;
+    const count = 280;
     for (let i=0;i<count;i++){
       const typeRand = Math.random();
       let type = 'rect';
