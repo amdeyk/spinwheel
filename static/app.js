@@ -56,7 +56,11 @@
   function layout() {
     const vw = Math.min(window.innerWidth, 820);
     const vh = Math.min(window.innerHeight, 1024);
-    const size = Math.min(Math.floor(vw * 0.8), Math.floor(vh * 0.6));
+    // Reduce wheel size on smaller mobile screens for better layout
+    const isMobile = window.innerWidth <= 768;
+    const widthFactor = isMobile ? 0.75 : 0.8;
+    const heightFactor = isMobile ? 0.48 : 0.6;
+    const size = Math.min(Math.floor(vw * widthFactor), Math.floor(vh * heightFactor));
     wheelCanvas.width = size * devicePixelRatio;
     wheelCanvas.height = size * devicePixelRatio;
     wheelCanvas.style.width = `${size}px`;
@@ -113,7 +117,9 @@
 
       // Label centered inside the slice (between hub and rim)
       ctx.save();
-      ctx.font = `900 ${17*devicePixelRatio}px ui-sans-serif, system-ui, -apple-system`;
+      // Make font size responsive to wheel radius (scales properly on mobile)
+      const baseFontSize = Math.max(10, radius * 0.030);
+      ctx.font = `900 ${baseFontSize}px ui-sans-serif, system-ui, -apple-system`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       const labelRadius = hub + (radius - rim - hub) * 0.55; // interior position
@@ -143,7 +149,8 @@
       }
 
       // Measure text to create background
-      const lineHeight = 20*devicePixelRatio;
+      // Make line height responsive to font size
+      const lineHeight = baseFontSize * 1.2;
       let maxWidth = 0;
       lines.forEach(line => {
         const metrics = ctx.measureText(line);
@@ -151,7 +158,8 @@
       });
 
       const textHeight = lineHeight * lines.length;
-      const bgPadding = 6*devicePixelRatio;
+      // Make padding responsive to font size
+      const bgPadding = baseFontSize * 0.35;
 
       // Draw semi-transparent background rectangle behind text
       ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
@@ -164,7 +172,8 @@
 
         // Draw text with strong outline for readability
         ctx.strokeStyle = '#1a1a2e';
-        ctx.lineWidth = 4*devicePixelRatio;
+        // Make stroke width responsive to font size
+        ctx.lineWidth = baseFontSize * 0.23;
         ctx.lineJoin = 'round';
         ctx.miterLimit = 2;
         ctx.strokeText(line, 0, yPos);
