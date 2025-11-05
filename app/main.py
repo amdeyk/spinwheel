@@ -71,6 +71,12 @@ async def index():
     return FileResponse(os.path.join(STATIC_DIR, "index.html"))
 
 
+# Mirror root at /spin for devices not auto-refreshing
+@app.get("/spin")
+async def spin():
+    return FileResponse(os.path.join(STATIC_DIR, "index.html"))
+
+
 # Serve static assets
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
@@ -124,4 +130,3 @@ async def download_logs(request: Request):
         return JSONResponse({"message": "No logs yet."}, status_code=200)
 
     return FileResponse(CSV_PATH, media_type="text/csv", filename="spins.csv")
-
