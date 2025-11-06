@@ -114,8 +114,8 @@
       ctx.save();
       // Make font size responsive to wheel radius (scales properly on mobile)
       // Larger slices (5 instead of 12) allow for bigger text
-      // Increase by 6px on mobile view for better readability
-      const baseFontSize = Math.max(12, radius * 0.042) + 8 + (window.innerWidth <= 768 ? 6 : 0);
+      // Increase by 3pt (~4px at 96dpi) on mobile for readability
+      const baseFontSize = Math.max(12, radius * 0.042) + 8 + (window.innerWidth <= 768 ? 4 : 0);
       ctx.font = `900 ${baseFontSize}px ui-sans-serif, system-ui, -apple-system`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
